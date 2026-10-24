@@ -1,0 +1,45 @@
+<!doctype html>
+<!--
+  The API reference: openapi.json rendered by Redoc (MIT), read-only.
+  Serve this directory over HTTP (browsers don't let a page fetch a file:// URL):
+    make docs          then open http://127.0.0.1:8090/
+  Redoc is loaded from jsDelivr at a pinned version, checked by its SRI hash.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZoneMinder API reference</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; padding: 0; background: #fff; }
+    #failed { display: none; font: 15px/1.5 system-ui, sans-serif; padding: 24px 16px; max-width: 720px; }
+  </style>
+</head>
+<body>
+  <div id="failed">
+    <p>The reference couldn't be shown. It needs <code>openapi.json</code> from the same
+    directory, served over HTTP (<code>make docs</code>), and Redoc from cdn.jsdelivr.net.</p>
+    <p>The document itself is <a href="openapi.json">openapi.json</a>.</p>
+  </div>
+  <div id="redoc"></div>
+  <script src="https://cdn.jsdelivr.net/npm/redoc@2.5.4/bundles/redoc.standalone.js"
+          integrity="sha384-w447zOpYfw/1Tv/5AK9NfHTlQIqE3RVR6KY62jCyy9zNDgO64cMwGGP1Fj0zJVf5"
+          crossorigin="anonymous"></script>
+  <script>
+    function failed() { document.getElementById('failed').style.display = 'block'; }
+    if (typeof Redoc === 'undefined') {
+      failed();
+    } else {
+      Redoc.init('openapi.json', {
+        expandResponses: '200',
+        pathInMiddlePanel: true,
+        requiredPropsFirst: true,
+        sortTagsAlphabetically: true,
+        hideDownloadButton: false,
+        jsonSampleExpandLevel: 3,
+      }, document.getElementById('redoc'), function (err) { if (err) failed(); });
+    }
+  </script>
+</body>
+</html>

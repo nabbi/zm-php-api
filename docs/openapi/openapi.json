@@ -6755,7 +6755,7 @@
           "Monitors"
         ],
         "summary": "Force, cancel or disable an alarm, or get its state",
-        "description": "Force, cancel or disable an alarm, or report the alarm state, through zmu. status needs view rights on the monitor, the rest edit rights.",
+        "description": "Force, cancel or disable an alarm, or report the alarm state, through zmu. status needs view rights on the monitor, the rest edit rights. on takes an optional cause (query or body), recorded on the event where zmu supports it.",
         "parameters": [
           {
             "name": "id",
@@ -6771,6 +6771,15 @@
             "in": "path",
             "required": true,
             "description": "`on` (force an alarm), `off` (cancel it), `disable`, or `status`",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cause",
+            "in": "query",
+            "required": false,
+            "description": "With `on`: the cause recorded on the event in place of \"Forced Web\". Letters, digits, spaces and `_ . , : ; ! ? ( ) [ ] / + # @ % = -` are kept, anything else is dropped, and the first 31 bytes are kept. Also taken from the body. Ignored where zmu has no `--cause` (ZoneMinder 1.38, and master before it).",
             "schema": {
               "type": "string"
             }

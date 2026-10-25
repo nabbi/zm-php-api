@@ -32,6 +32,7 @@ master, so where 1.38's CakePHP API differs from master's, it follows master:
 | Logins (`username=`/`password=`) | 1.38's session handling | master's (`zm_authenticate_request()`) |
 | Requests authenticated by password or session (`host/getVersion`, `host/login`, ...) | no cache headers | `Cache-Control: no-store, no-cache, must-revalidate`, `Expires`, `Pragma: no-cache`, as master: its login code starts the session, and PHP adds them |
 | `POST monitors` with a refused `Device` | `message` is `{"Device": ["..."]}` | `message` is a string, as master |
+| `monitors/alarm/.../command:on` with `cause=` | cause dropped, the event says "Forced Web" | the same: 1.38's zmu has no `--cause`, so it isn't passed (`Compat::zmuTakesCause()`). With a zmu that has it, the filtered cause is recorded |
 | `tags` add, edit, delete | 500 | they work, as on master |
 
 The contract suite on 1.38 (see `testing.md`) differs from stock 1.38 in exactly

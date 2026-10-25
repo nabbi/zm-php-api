@@ -136,7 +136,8 @@ class MonitorsController extends Controller {
   /**
    * monitors/alarm/id:<id>/command:<on|off|disable|status>: force, cancel or
    * disable an alarm, or report the alarm state, through zmu. status needs view
-   * rights on the monitor, the rest edit rights.
+   * rights on the monitor, the rest edit rights. on takes an optional cause
+   * (query or body), recorded on the event where zmu supports it.
    */
   public function alarm() {
     $id = $this->named('id');
@@ -152,6 +153,12 @@ class MonitorsController extends Controller {
       throw new UnauthorizedException('Insufficient Privileges');
     }
     if ($cmd != 'status') \ZM\Api\Auth::requireExplicitForGet($this->request);
+    // A cause for the event in place of "Forced Web".
+    // 1.38: zmu without --cause; the cause is dropped, as before.
+    if ($cmd == 'on') {
+      $cause = self::alarmCause($this->request->input('cause'));
+      if ($cause !== '' && \ZM\Api\Compat::zmuTakesCause()) $q .= ' --cause '.escapeshellarg($cause);
+    }
     $command = ZM_PATH_BIN.'/zmu'.($verbose ? " $verbose" : '').' -m'.escapeshellarg($id)." $q";
     $password = $this->request->input('pass') ?: $this->request->input('password'); // used only without a token secret
     $status = exec($command.\ZM\Api\Auth::zmuCredentials(is_string($password) ? $password : null), $output, $rc);
@@ -161,6 +168,29 @@ class MonitorsController extends Controller {
     // Since 1.36.16 zmu reports states one higher; clients expect the old numbers.
     if ($cmd == 'status') return array('status' => intval($status) - 1, 'output' => intval($output[0]) - 1);
     return array('status' => $status, 'output' => implode(PHP_EOL, $output));
+  }
+
+  /**
+   * The cause given to alarm on, as zmu records it: letters, digits, spaces
+   * and plain punctuation only, at most 31 bytes (the size of the shared
+   * trigger_cause field), cut on a character boundary. The cause is stored as
+   * the event's Cause and in its Notes, so it is kept to plain text: markup,
+   * quotes, backslashes and control characters are dropped. '' when nothing
+   * usable is left, which keeps the default "Forced Web". Same rule as ZoneMinder's
+   * MonitorsController::alarmCause().
+   */
+  private static function alarmCause($cause) {
+    if (!is_string($cause)) return '';
+    // Fails (null) on invalid UTF-8
+    $cause = preg_replace('/[^\p{L}\p{M}\p{N} _.,:;!?()\[\]\/+#@%=-]+/u', '', $cause);
+    if ($cause === null) return '';
+    $cause = trim(preg_replace('/ {2,}/', ' ', $cause));
+    $cut = '';
+    foreach (preg_split('//u', $cause, -1, PREG_SPLIT_NO_EMPTY) as $char) {
+      if (strlen($cut) + strlen($char) > 31) break;
+      $cut .= $char;
+    }
+    return rtrim($cut);
   }
 
   /**

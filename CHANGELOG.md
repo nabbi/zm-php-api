@@ -48,4 +48,11 @@ replaced CakePHP in the tree, then:
   v3, the API reference); `contrib/webserver/nginx.conf` sends every `/zm/api/`
   path to the front controller, as Apache's rules already do.
 
+- `monitors/alarm/.../command:on` takes an optional `cause` (query or body),
+  passed to `zmu --cause` so the event records it in place of "Forced Web"
+  (the ZoneMinder change that adds it). Only letters, digits, spaces and plain
+  punctuation are kept, cut to 31 bytes on a character boundary. Where zmu has no `--cause` (1.38,
+  master before that change) it is not passed: such a zmu would print its
+  usage and not force the alarm. `test_api_alarm_cause.php`.
+
 See `SECURITY.md` for every intended difference from CakePHP's API.

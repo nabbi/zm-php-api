@@ -39,9 +39,13 @@ final class Compat {
   /** @var array table name => whether it exists */
   private static $tables = array();
 
+  /** @var bool|null whether zmu takes --cause, once probed */
+  private static $zmuCause = null;
+
   /** Forget what was probed (the unit tests switch databases between cases). */
   public static function reset() {
     self::$tables = array();
+    self::$zmuCause = null;
   }
 
   // ------------------------------------------------------------ database
@@ -86,6 +90,34 @@ final class Compat {
    */
   public static function hasColumn($table, $column) {
     return array_key_exists($column, Schema::columns($table));
+  }
+
+  // ----------------------------------------------------------------- zmu
+
+  /**
+   * Whether zmu takes --cause, the cause recorded on a forced alarm's event.
+   *
+   * master (not merged yet): zmu -a --cause <text>. Older zmu, 1.38's
+   * included, treats --cause as an unknown option: it prints its usage and
+   * exits 0 without forcing the alarm, so the option is passed only when zmu
+   * lists it. The probe runs `zmu -h`, which prints the usage before reading
+   * any config, and is kept in APCu per zmu binary (path and mtime), so an
+   * upgrade is picked up.
+   */
+  public static function zmuTakesCause() {
+    if (self::$zmuCause !== null) return self::$zmuCause;
+    $zmu = ZM_PATH_BIN.'/zmu';
+    $key = 'zm-php-api:zmu-cause:'.$zmu.':'.@filemtime($zmu);
+    $shared = function_exists('apcu_fetch');
+    if ($shared) {
+      $cached = apcu_fetch($key, $hit);
+      if ($hit && is_bool($cached)) return self::$zmuCause = $cached;
+    }
+    $output = array();
+    exec(escapeshellarg($zmu).' -h 2>&1', $output);
+    $takes = strpos(implode("\n", $output), '--cause') !== false;
+    if ($shared) apcu_store($key, $takes, 3600);
+    return self::$zmuCause = $takes;
   }
 
   // ------------------------------------------------------- authentication

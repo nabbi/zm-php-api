@@ -73,6 +73,8 @@ check('events ?_=123&stateful=1&auth=x: not filters (200)', status('GET', 'event
 check('events ?NoSuchField=1: 400, as CakePHP', status('GET', 'events.json?NoSuchField=1'), 400);
 check('events ?StartTime%20%3E=... (PHP mangles the key to StartTime_>): 400, not unfiltered', status('GET', 'events.json?StartTime%20%3E=2026-01-01'), 400);
 check('events/index/NoSuchField:1 (named): still 400', status('GET', 'events/index/NoSuchField:1.json'), 400);
+check('events/index/0:1=1 (an all-digit field, GHSA-xqfr): 400', status('GET', 'events/index/0:1=1.json'), 400);
+check('events/index/0:1=1 UNION ... (GHSA-xqfr): 400', status('GET', 'events/index/0:'.rawurlencode('1=1 UNION SELECT Username, Password FROM Users-- ').'.json'), 400);
 $db->queries = array();
 check('tags/index/Events.Id:1: 200', status('GET', 'tags/index/Events.Id:1.json'), 200);
 $q = array_values(array_filter($db->queries, function ($q) { return strpos($q[0], 'FROM `Tags` AS') !== false; }));

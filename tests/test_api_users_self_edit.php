@@ -7,7 +7,9 @@
 //     and nobody else's, and no other users action
 //   - they change only Password, Language and HomeView, what the web UI's self
 //     edit allows; never Username, permissions or anything else
-//   - an empty Password leaves the password alone
+//   - an empty Password leaves the password alone; a new one also sets
+//     TokenMinExpiry, revoking the user's tokens issued so far (as ZoneMinder
+//     master does, GHSA-5w6w); nothing else writes it
 //   - a Language must be a lang file's name: no paths, no missing files
 //
 // Run: tests/run.sh test_api_users_self_edit.php
@@ -29,7 +31,8 @@ $db = new FakeDb();
 $db->table('Users', array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)',
     'Name' => 'varchar(64)', 'Language' => 'varchar(8)', 'Enabled' => 'tinyint(3) unsigned', 'Stream' => "enum('None','View')",
     'Events' => "enum('None','View','Edit')", 'Monitors' => "enum('None','View','Edit','Create')",
-    'System' => "enum('None','View','Edit')", 'HomeView' => 'varchar(64)', 'APIEnabled' => 'tinyint(3) unsigned'))
+    'System' => "enum('None','View','Edit')", 'HomeView' => 'varchar(64)', 'APIEnabled' => 'tinyint(3) unsigned',
+    'TokenMinExpiry' => 'int(10) unsigned'))
   ->table('Users_Roles', array('Id' => 'int(10) unsigned', 'Name' => 'varchar(64)'))
   ->on('/FROM Users WHERE Enabled=1 AND Username=\?/', function ($sql, $p) use ($users) {
     return isset($users[$p[0]]) ? array($users[$p[0]]) : array();
@@ -74,13 +77,21 @@ check('one UPDATE', count($w), 1);
 preg_match_all('/`(\w+)` = \?/', strstr($w[0][0], 'WHERE', true), $m);
 $set = $m[1];
 sort($set);
-check('only Password, Language and HomeView written', $set, array('HomeView', 'Language', 'Password'));
+check('only Password, Language and HomeView written, plus TokenMinExpiry', $set, array('HomeView', 'Language', 'Password', 'TokenMinExpiry'));
 check('the password hashed', password_verify('new-secret', $w[0][1][array_search('Password', $m[1])]), true);
+$minExpiry = $w[0][1][array_search('TokenMinExpiry', $m[1])];
+check('TokenMinExpiry is now (tokens issued before the change are revoked)', ($minExpiry >= time() - 5 and $minExpiry <= time()), true);
+
+$db->queries = array();
+answered(api('PUT', "users/edit/$selfId.json", 'self', array('User' => array('HomeView' => 'console'))));
+$w = writes($db);
+check('without a Password, TokenMinExpiry is not written', strpos($w[0][0], '`TokenMinExpiry`'), false);
 
 $db->queries = array();
 answered(api('PUT', "users/edit/$selfId.json", 'self', array('User' => array('Password' => '', 'HomeView' => 'console'))));
 $w = writes($db);
 check('an empty Password is left alone', strpos($w[0][0], '`Password`'), false);
+check('and does not revoke tokens', strpos($w[0][0], '`TokenMinExpiry`'), false);
 
 $db->queries = array();
 $a = answered(api('PUT', "users/edit/$selfId.json", 'self', array('User' => array('System' => 'Edit'))));

@@ -123,7 +123,10 @@ public function status($id = null) {
   `message`. Anything else that escapes an action is a 500 that says only
   "An Internal Error Has Occurred."; the real error goes to ZoneMinder's log.
 - **Permissions:** `beforeFilter()` authenticates. A controller whose actions all
-  need a permission overrides it and checks after `parent::beforeFilter()`. Use
+  need a permission overrides it and checks after `parent::beforeFilter()`.
+  `requirePermission($area, $level)` grants an area by the user's own field or
+  their role's (User_Roles), as `ZM\User::canView()/canEdit()` and the web UI
+  do; an area off `Controller::PERMISSION_AREAS` fails closed. Use
   the helpers in `Controller`: `requireMonitorView/Edit()`, `requireEventsView()`,
   `viewableMonitorCondition()`, `filterContainedEvents()`. Per-monitor access
   (Monitors_Permissions, group permissions) is decided by ZoneMinder's

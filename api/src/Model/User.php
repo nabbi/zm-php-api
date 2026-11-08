@@ -6,8 +6,9 @@ use ZM\Api\Db\Model;
 /**
  * A user account (Users). The password hash is never read into answers, also
  * when users are listed under another record (a role's users); a password sent
- * in a save is stored bcrypt-hashed. Saving or deleting one empties the
- * TokenCache, so the change applies to tokens in use at once.
+ * in a save is stored bcrypt-hashed and revokes the user's tokens issued so far
+ * (TokenMinExpiry). Saving or deleting one empties the TokenCache, so the
+ * change applies to tokens in use at once.
  */
 class User extends Model {
   const TABLE = 'Users';
@@ -50,6 +51,10 @@ class User extends Model {
   protected function beforeSave(array $fields, $update) {
     if (!empty($fields['Password'])) {
       $fields['Password'] = password_hash($fields['Password'], PASSWORD_BCRYPT);
+      // A password change revokes the user's tokens: validateToken() refuses any
+      // token issued before TokenMinExpiry, as the options page's revoke does.
+      // Ported from ZoneMinder master (refs GHSA-5w6w-qp25-2qqh, #5455).
+      $fields['TokenMinExpiry'] = time();
     }
     return $fields;
   }

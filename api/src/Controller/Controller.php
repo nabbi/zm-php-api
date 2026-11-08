@@ -123,17 +123,39 @@ abstract class Controller {
 
   // -------------------------------------------------------------- permissions
 
+  /** The permission areas a user, or their role, holds a None/View/Edit/Create level for. */
+  const PERMISSION_AREAS = array('Stream', 'Events', 'Control', 'Monitors', 'Groups', 'Devices', 'Snapshots', 'System');
+
   /**
    * @param string $area a permission of the user: System, Monitors, Events, Groups, ...
    * @param string $level View (View or better) or Edit (Edit, or Create for Monitors)
-   * @throws UnauthorizedException unless the user has it
+   * @throws UnauthorizedException unless the user, or their role, has it
    */
   protected function requirePermission($area, $level = 'View', $message = 'Insufficient Privileges') {
     global $user;
     if (!$user) return; // authentication is off: everyone may do everything
-    $have = $user->$area();
-    $ok = ($level == 'View') ? ($have != 'None') : ($have == 'Edit' || $have == 'Create');
+    $ok = false;
+    foreach (self::permissionLevels($user, $area) as $have) {
+      if (($level == 'View') ? ($have and $have != 'None') : ($have == 'Edit' || $have == 'Create')) $ok = true;
+    }
     if (!$ok) throw new UnauthorizedException($message);
+  }
+
+  /**
+   * The levels $user holds for $area: their own field and their role's
+   * (User_Roles), the way ZM\User::canView()/canEdit() read them on master and
+   * release-1.38 (web/includes/User.php, refs GHSA-ff93-w6fm-vqxr) and the web UI
+   * grants access. Computed here rather than by calling those methods: on a tree
+   * without them (1.38.6 and older) $user->canView() falls through to
+   * ZM_Object::__call(), whose answer is truthy for everyone. An area off the
+   * list has no levels, so a check on it fails closed.
+   */
+  private static function permissionLevels(\ZM\User $user, $area) {
+    if (!in_array($area, self::PERMISSION_AREAS, true)) return array();
+    $levels = array($user->$area());
+    $role = $user->Role();
+    if ($role) $levels[] = $role->$area();
+    return $levels;
   }
 
   /**

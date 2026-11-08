@@ -10,7 +10,14 @@ replaced CakePHP in the tree, then:
 - Packaging: `tools/zm-overlay.sh` layers it onto a ZoneMinder source tree,
   for distribution packages and test builds.
 - Ported from ZoneMinder master since the import: restart zmc and zmcontrol.pl
-  after an API monitor edit through `ZM\Monitor` (`25dba3267`).
+  after an API monitor edit through `ZM\Monitor` (`25dba3267`); a password
+  change sets `TokenMinExpiry`, so the user's tokens issued before it are
+  refused (`#5455`, GHSA-5w6w); area permission checks
+  (`Controller::requirePermission()`) count the user's role (User_Roles) as
+  well as their own field, as `ZM\User::canView()/canEdit()` and the web UI
+  do, in every area (CakePHP's API does so for Events only, GHSA-rmf7), and an
+  area that is not a permission fails closed. All-digit filter field names
+  (`0:1=1`, GHSA-xqfr) were already refused as unknown columns; a test pins it.
 - Security: 18 hardening changes over CakePHP's behaviour, each with a unit
   test (`SECURITY.md`).
 - zmu gets `-U` with `-A` when it has to use an auth hash.

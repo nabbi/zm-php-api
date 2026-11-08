@@ -24,7 +24,7 @@ the legacy API, this project has done its job.
 | Compatibility | All 525 records of an API contract suite (every action, every role) match stock CakePHP on ZoneMinder master |
 | Clients | pyzmNg, zm-py (Home Assistant), zmNinjaNg, zmeventnotificationNg and openHAB's binding pass their own test suites against it, as they do on CakePHP |
 | Fixes | 19 endpoints that fail on CakePHP work; 10 kinds of wrong answer are corrected; 16 security hardening changes, each with a unit test |
-| Tests | 27 unit test files (385 checks), no database needed; end-to-end runs on single-server and multi-server installs |
+| Tests | 32 unit test files (661 checks), no database needed; end-to-end runs on single-server and multi-server installs |
 | ZoneMinder | master and 1.38, from one codebase |
 
 ## Quick start

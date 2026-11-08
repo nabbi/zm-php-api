@@ -57,6 +57,10 @@ exercised. The checks:
 
 Security: every hardening change has a unit test (`SECURITY.md`).
 
+Unit tests re-run 2026-11-08 on master `855683051` and release-1.38 `0d3686b03`:
+32 files, 661 checks, 0 failed on both (`TMPDIR` must allow executables:
+`test_api_alarm_cause.php` runs a stand-in `zmu`; a `noexec` `/tmp` fails it).
+
 ### Bugs this testing found
 
 - zmNinjaNg encodes whole path segments, so named filters arrived as

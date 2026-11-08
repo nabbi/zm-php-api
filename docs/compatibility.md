@@ -55,6 +55,7 @@ Each answers where CakePHP failed; no client depends on the failure.
 | `?_=<n>` and credentials on `events.json` without named arguments | 400 / 500 (taken as filters) | ignored; other unknown parameters are a 400, as in CakePHP |
 | XML request bodies (`Content-Type: application/xml`) | decoded | not supported (no client sends them) |
 | With authentication off, writes from a browser app on another origin (zmNinjaNg's web build behind its dev proxy) | accepted | refused; reads and login work. Serve the app from ZoneMinder's origin, or turn authentication on |
+| An area permission (System, Monitors, Groups, ...) the user holds through their role (User_Roles), not their own field | refused, except Events (`$user->canView('Events')`) | granted, as the web UI grants it (`ZM\User::canView()/canEdit()`): own field or role |
 
 The contract suite keeps a record of each CakePHP bug this API fixes; each
 matches its fix.

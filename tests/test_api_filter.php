@@ -71,6 +71,21 @@ check('operator allow list applies', run(array('Id OR' => '1')), '400 Invalid op
 check('invalid characters rejected', run(array(';Id' => '1')), '400 Invalid argument before `:`: ;Id');
 check('backtick rejected', run(array('Id`' => '1')), '400 Invalid operator: `');
 
+echo "all-digit field names (refs GHSA-xqfr-6v9x-cvwc)\n";
+// `0:1=1` in a URL is the named argument 0 => '1=1'. In CakePHP that integer key
+// reached the conditions, where Cake rendered its value as raw SQL; here a
+// field has to be a column, and no column is all digits.
+check('0 => 1=1 is unknown', run(array('1=1')), '400 Unknown filter field: 0');
+check('0 => a UNION', run(array(0 => '1=1 UNION SELECT Username, Password FROM Users-- ')), '400 Unknown filter field: 0');
+check('an explicit integer key', run(array(7 => 'x')), '400 Unknown filter field: 7');
+check('a multi-digit integer key', run(array(42 => 'x')), '400 Unknown filter field: 42');
+check('a digit with an operator', run(array('0 >' => '1')), '400 Unknown filter field: 0');
+check('an all-digit value on a real field is fine', run(array('Name' => '0')), array('Monitor.Name' => '0'));
+// Db\Conditions renders an integer-keyed string as SQL; Filter only ever puts
+// an array (an IN list) under an integer key.
+$raw = array_filter(run(array('Id IN' => '1,2', 'Name' => 'x')), function ($v, $k) { return is_int($k) and !is_array($v); }, ARRAY_FILTER_USE_BOTH);
+check('no integer key carries a string (raw SQL)', $raw, array());
+
 echo "a model without joins\n";
 $frame = new \ZM\Api\Model\Frame();
 check('Frame column', \ZM\Api\Filter::conditions(array('EventId' => '7'), $frame), array('Frame.EventId' => '7'));

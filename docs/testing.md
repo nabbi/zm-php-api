@@ -14,6 +14,9 @@ declares and records every statement), `api()`/`apiJson()` (one request through
 headers) and a stand-in `config.php`. `run.sh` lays out a scratch copy as
 ZoneMinder's tree (`web/` from `ZM_SRC`, this `api/` as `web/api`, `tests/` as
 `tests/php`), so the API's relative includes resolve. Needs only the PHP CLI.
+With APCu enabled for the CLI (`apc.enable_cli=1`, as CI runs) the token and
+schema caches are exercised too; without it the tests that cover them use an
+in-process stand-in.
 
 CI (`.github/workflows/ci.yml`) runs `make lint` and these tests on every push
 and pull request, on PHP 8.1, 8.3 and 8.4 against a fresh clone of ZoneMinder

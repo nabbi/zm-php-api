@@ -28,11 +28,7 @@ $selfId = $users['self']['Id'];
 $otherId = $users['other']['Id'];
 
 $db = new FakeDb();
-$db->table('Users', array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)',
-    'Name' => 'varchar(64)', 'Language' => 'varchar(8)', 'Enabled' => 'tinyint(3) unsigned', 'Stream' => "enum('None','View')",
-    'Events' => "enum('None','View','Edit')", 'Monitors' => "enum('None','View','Edit','Create')",
-    'System' => "enum('None','View','Edit')", 'HomeView' => 'varchar(64)', 'APIEnabled' => 'tinyint(3) unsigned',
-    'TokenMinExpiry' => 'int(10) unsigned'))
+$db->table('Users', USERS_COLUMNS)
   ->table('Users_Roles', array('Id' => 'int(10) unsigned', 'Name' => 'varchar(64)'))
   ->on('/FROM Users WHERE Enabled=1 AND Username=\?/', function ($sql, $p) use ($users) {
     return isset($users[$p[0]]) ? array($users[$p[0]]) : array();

@@ -12,7 +12,7 @@ require_once __DIR__.'/support/api.php';
 
 $users = array('admin' => userRow('admin', array('System' => 'Edit')));
 $db = new FakeDb();
-$db->table('Users', array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)'))
+$db->table('Users', USERS_COLUMNS)
   ->on('/FROM Users WHERE Enabled=1 AND (LOWER\()?Username/', function ($sql, $p) use ($users) {
     return isset($users[$p[0]]) ? array($users[$p[0]]) : array();
   })

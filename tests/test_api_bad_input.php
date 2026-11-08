@@ -17,7 +17,7 @@ require_once __DIR__.'/support/api.php';
 $users = array('admin' => array_merge(userRow('admin', array('System' => 'Edit', 'Monitors' => 'Edit', 'Events' => 'Edit')),
   array('Password' => password_hash('admin-pw', PASSWORD_BCRYPT))));
 $db = new FakeDb();
-$db->table('Users', array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)'))
+$db->table('Users', USERS_COLUMNS)
   ->table('Events', array('Id' => 'bigint(20) unsigned', 'MonitorId' => 'int(10) unsigned', 'Name' => 'varchar(64)',
     'StartDateTime' => 'datetime', 'EndDateTime' => 'datetime', 'Length' => 'decimal(10,2)'))
   ->table('Tags', array('Id' => 'int(10) unsigned', 'Name' => 'varchar(64)'))

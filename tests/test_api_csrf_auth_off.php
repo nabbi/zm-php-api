@@ -9,7 +9,7 @@ define('ZM_OPT_USE_AUTH', false);
 require_once __DIR__.'/support/api.php';
 
 $db = new FakeDb();
-$db->table('Users', array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)'))
+$db->table('Users', USERS_COLUMNS)
   ->on('/FROM `(Monitors|Groups)_Permissions`/', array())
   ->on('/Sessions/', array())
   ->on('/^SELECT COUNT\(\*\) FROM `Users`/', array(array('COUNT(*)' => 0)))

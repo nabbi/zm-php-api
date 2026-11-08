@@ -35,8 +35,7 @@ $users = array(
 );
 
 $db = new FakeDb();
-$db->table('Users', array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)',
-    'System' => "enum('None','View','Edit')", 'Events' => "enum('None','View','Edit')", 'RoleId' => 'int(10) unsigned'))
+$db->table('Users', USERS_COLUMNS)
   ->table('States', array('Id' => 'int(10) unsigned', 'Name' => 'varchar(64)', 'Definition' => 'text', 'IsActive' => 'tinyint(3) unsigned'))
   ->table('Tags', array('Id' => 'int(10) unsigned', 'Name' => 'varchar(64)', 'CreateDate' => 'datetime',
     'CreatedBy' => 'int(10) unsigned', 'LastAssignedDate' => 'datetime'))

@@ -65,6 +65,10 @@ class FakeDb {
     return $this;
   }
 
+  public function has($name) {
+    return isset($this->tables[$name]);
+  }
+
   /** Rows (a list, or a function of sql and params) for statements matching $pattern. First match wins. */
   public function on($pattern, $rows) {
     $this->rules[] = array($pattern, $rows);
@@ -156,6 +160,22 @@ class FakeStatement {
  * found through the include path as ZoneMinder's includes look for it) and $db as
  * the database. Call once, before api().
  */
+/**
+ * The Users columns userRow() fills, as useDb() declares them for a test that
+ * declares no Users table itself. With APCu enabled (apc.enable_cli=1, as CI
+ * runs), TokenCache::store() reads the Users schema to cache the user's row,
+ * and the next request's user is built from the cached columns only: a test
+ * that declares Users itself has to declare every column its users carry.
+ */
+const USERS_COLUMNS = array('Id' => 'int(10) unsigned', 'Username' => 'varchar(32)', 'Password' => 'varchar(64)',
+  'Name' => 'varchar(64)', 'Enabled' => 'tinyint(3) unsigned', 'Stream' => "enum('None','View')",
+  'Events' => "enum('None','View','Edit')", 'Control' => "enum('None','View','Edit')",
+  'Monitors' => "enum('None','View','Edit','Create')", 'Groups' => "enum('None','View','Edit')",
+  'Devices' => "enum('None','View','Edit')", 'Snapshots' => "enum('None','View','Edit')",
+  'System' => "enum('None','View','Edit')", 'MonitorIds' => 'text', 'Language' => 'varchar(8)', 'HomeView' => 'varchar(64)',
+  'TokenMinExpiry' => 'int(10) unsigned',
+  'APIEnabled' => 'tinyint(3) unsigned', 'RoleId' => 'int(10) unsigned');
+
 function apiBoot(FakeDb $db) {
   // ZoneMinder's is_session_started() calls a bare Warning() under the PHP CLI
   // (fatal: only ZM\Warning exists) and reports no session there. The API runs
@@ -180,6 +200,13 @@ function apiBoot(FakeDb $db) {
 function useDb(FakeDb $db) {
   \ZM\Api\Compat::reset();  // what it probed came from the previous database
   \ZM\Api\Db\Schema::reset();
+  // With APCu on (apc.enable_cli=1), the previous database's columns and cached
+  // users are in it too, under the same versions; a new database starts clean.
+  if (function_exists('apcu_delete') and class_exists('APCUIterator')
+      and (!function_exists('apcu_enabled') or apcu_enabled())) {
+    apcu_delete(new \APCUIterator('/^zm-php-api:/'));
+  }
+  if (!$db->has('Users')) $db->table('Users', USERS_COLUMNS);
   \ZM\Api\Db\Db::$connection = $db;
   $GLOBALS['dbConn'] = $db;
 }

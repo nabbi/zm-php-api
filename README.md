@@ -1,5 +1,7 @@
 # zm-php-api
 
+[![ci](https://github.com/nabbi/zm-php-api/actions/workflows/ci.yml/badge.svg)](https://github.com/nabbi/zm-php-api/actions/workflows/ci.yml)
+
 A drop-in replacement for ZoneMinder's CakePHP API (`/zm/api`, API v2: it reports `apiversion` 2.0), in
 plain PHP, with no framework.
 
@@ -29,10 +31,17 @@ the legacy API, this project has done its job.
 
 ## Quick start
 
+Download the tarball of a [release](https://github.com/nabbi/zm-php-api/releases)
+(or clone this repository), then, on a ZoneMinder source tree, before CMake:
+
 ```sh
 tools/zm-overlay.sh /path/to/zoneminder     # replaces web/api with this API
 cd /path/to/zoneminder && cmake ... && make install
 ```
+
+On Gentoo, `www-misc/zoneminder` from the
+[oubliette overlay](https://github.com/nabbi/oubliette-overlay) builds either
+API: `USE=apiv2-php` for this one, `USE=apiv2-cake` (the default) for CakePHP.
 
 Nothing to change in the web server ([docs/webserver.md](docs/webserver.md) has
 recommended changes). For packaging and the details, see
@@ -53,7 +62,7 @@ recommended changes). For packaging and the details, see
 
 ## Status
 
-Experimental (2.0.0, unreleased; numbered after API v2). Tested on ZoneMinder master and release-1.38.
+Release candidate (2.0.0-rc.1; numbered after API v2). Tested on ZoneMinder master and release-1.38, by CI on every push ([ci](https://github.com/nabbi/zm-php-api/actions/workflows/ci.yml)); the 2.0.0 final follows the ZoneMinder release that carries the API fixes the unit tests reproduce.
 
 ## License
 

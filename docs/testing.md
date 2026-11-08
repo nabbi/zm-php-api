@@ -2,7 +2,7 @@
 
 Two layers, from fast to complete.
 
-## 1. Unit tests (this repository)
+## 1. Unit tests (this repository, and CI)
 
 ```sh
 ZM_SRC=/path/to/zoneminder tests/run.sh
@@ -14,6 +14,12 @@ declares and records every statement), `api()`/`apiJson()` (one request through
 headers) and a stand-in `config.php`. `run.sh` lays out a scratch copy as
 ZoneMinder's tree (`web/` from `ZM_SRC`, this `api/` as `web/api`, `tests/` as
 `tests/php`), so the API's relative includes resolve. Needs only the PHP CLI.
+
+CI (`.github/workflows/ci.yml`) runs `make lint` and these tests on every push
+and pull request, on PHP 8.1, 8.3 and 8.4 against a fresh clone of ZoneMinder
+master and of release-1.38, then applies `tools/zm-overlay.sh` to the tree and
+builds the release tarball. A `v*` tag runs the tests again and publishes the
+release (`release.yml`).
 
 `test_api_openapi.php` holds the API reference (`docs/openapi/openapi.json`)
 to the code: every action documented, every documented URL routed to its action.

@@ -1,6 +1,15 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0-rc.1 (2026-11-08)
+
+First public release, as a release candidate: the ZoneMinder release that
+carries the API fixes its unit tests reproduce is still in the works, so the
+2.0.0 final follows that release. Packaged as a tarball on the GitHub release
+(`tools/package.sh`), built and tested by CI (`.github/workflows/`) against
+ZoneMinder master and release-1.38 on PHP 8.1, 8.3 and 8.4. Gentoo: the
+`www-misc/zoneminder` ebuild in the
+[oubliette overlay](https://github.com/nabbi/oubliette-overlay) builds
+ZoneMinder with this API (`USE=apiv2-php`) or with CakePHP (`USE=apiv2-cake`).
 
 Numbered after the API it serves (API v2, `apiversion` 2.0); was 0.1.0 before.
 

@@ -1,0 +1,68 @@
+# Unit tests and lint on every push and pull request, against the ZoneMinder
+# trees the API runs on (master and release-1.38), on the PHP versions those
+# trees support. The package job builds the same tarball a release ships
+# (tools/zm-overlay.sh plus api/, docs and tests) and keeps it as a workflow
+# artifact, so a build of any commit can be tried without a release.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: php ${{ matrix.php }}, zoneminder ${{ matrix.zm }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.3', '8.4']
+        zm: [master, release-1.38]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          # APCu: the token cache and the login throttle (tests cover both)
+          extensions: apcu, mbstring, pdo, json
+          ini-values: apc.enable_cli=1
+          coverage: none
+
+      - name: Lint
+        run: make lint
+
+      - name: Check out ZoneMinder ${{ matrix.zm }}
+        run: git clone --depth 1 --branch ${{ matrix.zm }} https://github.com/ZoneMinder/zoneminder.git "$RUNNER_TEMP/zoneminder"
+
+      - name: Unit tests
+        run: ZM_SRC="$RUNNER_TEMP/zoneminder" tests/run.sh
+
+      - name: Overlay applies to the tree
+        run: |
+          tools/zm-overlay.sh "$RUNNER_TEMP/zoneminder"
+          test -f "$RUNNER_TEMP/zoneminder/web/api/dispatch.php"
+          test ! -d "$RUNNER_TEMP/zoneminder/web/api/lib"
+          test "$(cat "$RUNNER_TEMP/zoneminder/web/api/VERSION")" = "$(cat VERSION)"
+          # a second run changes nothing
+          tools/zm-overlay.sh "$RUNNER_TEMP/zoneminder"
+
+  package:
+    name: package
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the tarball
+        run: tools/package.sh dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zm-php-api-${{ github.sha }}
+          path: dist/*
+          if-no-files-found: error

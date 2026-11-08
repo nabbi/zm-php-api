@@ -1,0 +1,52 @@
+# A tag v<VERSION> publishes a GitHub release with the overlay tarball
+# (tools/package.sh) and its checksum. A tag with a pre-release part
+# (v2.0.0-rc.1) is marked as a pre-release. The tag has to match VERSION.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches VERSION
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          ver="$(tr -d '[:space:]' < VERSION)"
+          [ "$tag" = "$ver" ] || { echo "tag $GITHUB_REF_NAME but VERSION is $ver" >&2; exit 1; }
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: apcu, mbstring, pdo, json
+          ini-values: apc.enable_cli=1
+          coverage: none
+
+      - name: Unit tests against ZoneMinder master and release-1.38
+        run: |
+          for b in master release-1.38; do
+            git clone --depth 1 --branch "$b" https://github.com/ZoneMinder/zoneminder.git "$RUNNER_TEMP/zm-$b"
+            ZM_SRC="$RUNNER_TEMP/zm-$b" tests/run.sh
+          done
+
+      - name: Build the tarball
+        run: tools/package.sh dist
+
+      - name: Release notes from CHANGELOG.md
+        run: tools/package.sh notes "${GITHUB_REF_NAME#v}" > "$RUNNER_TEMP/notes.md"
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pre=; case "$GITHUB_REF_NAME" in *-*) pre=--prerelease ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* $pre \
+            --title "zm-php-api ${GITHUB_REF_NAME#v}" --notes-file "$RUNNER_TEMP/notes.md"

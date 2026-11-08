@@ -14,13 +14,25 @@ rules, points the top-level submodule check at `dep/RtspServer`, and writes
 `web/api/VERSION`. It checks every edit applies before making any, and running
 it again is harmless.
 
+## From a release
+
+Each [release](https://github.com/nabbi/zm-php-api/releases) carries
+`zm-php-api-<version>.tar.gz` (this repository at that tag, under
+`zm-php-api-<version>/`) and its SHA-256. CI keeps the same tarball of every
+commit on `main` as a workflow artifact (`.github/workflows/ci.yml`,
+`tools/package.sh`). Unpack it and run its `tools/zm-overlay.sh` as above.
+
 ## Packaging
 
 A distribution package runs `tools/zm-overlay.sh` on the unpacked ZoneMinder
 source in its prepare step, before CMake, and can run the unit tests
 (`ZM_SRC=<source> tests/run.sh`, PHP CLI only) as its test step. Offering both
 APIs is a build option: without the overlay step, ZoneMinder's CakePHP API is
-built unchanged.
+built unchanged. The Gentoo ebuild in the
+[oubliette overlay](https://github.com/nabbi/oubliette-overlay)
+(`www-misc/zoneminder`) does exactly that: `USE=apiv2-php` downloads the
+release tarball and runs the overlay in `src_prepare`, `USE=apiv2-cake` (the
+default) builds CakePHP; `USE=test` runs the unit tests.
 
 ## Web server
 
@@ -36,6 +48,8 @@ order, running next to API v3 and serving the API reference, see
 |---|---|
 | `api/` | Installs as ZoneMinder's `web/api`: `dispatch.php`, `src/` (guide: [architecture.md](architecture.md)), and `index.php` + `app/webroot/index.php`, which forward to `dispatch.php` so CakePHP-era web server configurations keep working |
 | `tools/zm-overlay.sh` | Layers `api/` onto a ZoneMinder source tree in place of CakePHP, before CMake runs |
+| `tools/package.sh` | The release tarball and its checksum; a version's CHANGELOG section as release notes |
+| `.github/workflows/` | CI: lint, unit tests on ZoneMinder master and release-1.38 (PHP 8.1, 8.3, 8.4), the overlay on a fresh tree, the tarball; a `v*` tag publishes a release |
 | `tests/` | DB-free unit tests; `tests/run.sh` runs them against a ZoneMinder source tree |
 | `contrib/webserver/` | Optional: Apache and nginx rules that route `/zm/api` to `dispatch.php` directly |
 | `SECURITY.md` | Reporting, and what the security changes cover |
